@@ -4,11 +4,13 @@
   </header>
 
   <main>
-    <TreeComponent
-        :data="data"
-        item-title="label"
-        item-value="id"
-    />
+    <div class="vw-100 d-flex justify-content-center">
+      <TreeComponent
+          :data="data"
+          item-title="label"
+          item-value="id"
+      />
+    </div>
   </main>
 </template>
 
@@ -27,12 +29,14 @@ export default {
       const label = `Item ${i}`;
       const value = `item_${i}`;
 
-      rawData.push({ id: i, parent_id, label, value });
+      rawData.push({id: i, parent_id, label, value});
     }
 
     function prepareData(array, parentId = null) {
       let result = [];
       array.forEach((item) => {
+        item.__selected = false;
+        item.__expanded = false;
         if (item.parent_id === parentId) {
           result.push(item);
           item.children = prepareData(array, item.id);

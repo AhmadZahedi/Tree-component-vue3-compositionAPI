@@ -2,5 +2,10 @@
 Tree node
 </template>
 
-<script setup>
+<script>
+export default {
+  setup() {
+    return {}
+  }
+}
 </script>

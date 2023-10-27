@@ -1,19 +1,24 @@
 <template>
-Tree component
-<TreeNode
-    v-for="node in data"
-    :node="node"
-    :itemValue="itemValue"
-    :itemTitle="itemTitle"
-/>
+  Tree component
+  <ul>
+    <TreeNodeComponent
+        v-for="node in data"
+        :node="node"
+        :itemValue="itemValue"
+        :itemTitle="itemTitle"
+    />
+  </ul>
 </template>
 
 <script>
-import TreeNode from "./TreeNodeComponent.vue";
+import TreeNodeComponent from "./TreeNodeComponent.vue";
+import {ref} from "vue";
+
 export default {
-  components: { TreeNode },
+  components: {TreeNodeComponent},
+
   props: {
-    data: {
+    rawData: {
       type: Array,
       required: true
     },
@@ -26,10 +31,28 @@ export default {
       default: 'title'
     }
   },
-  setup(props) {
-    console.log(props.data)
 
-    return {}
+  setup(props) {
+    console.log(props.rawData)
+
+    function prepareData(array, parentId = null) {
+      let result = [];
+      array.forEach((item) => {
+        item.__selected = false;
+        item.__expanded = true;
+        if (item.parent_id === parentId) {
+          result.push(item);
+          item.children = prepareData(array, item.id);
+        }
+      })
+      return result;
+    }
+
+    const data = ref(prepareData(props.rawData));
+
+    return {
+      data
+    };
   }
 }
 </script>

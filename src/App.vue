@@ -6,7 +6,7 @@
   <main>
     <div class="vw-100 d-flex justify-content-center">
       <TreeComponent
-          :data="data"
+          :rawData="rawData"
           item-title="label"
           item-value="id"
       />
@@ -32,24 +32,11 @@ export default {
       rawData.push({id: i, parent_id, label, value});
     }
 
-    function prepareData(array, parentId = null) {
-      let result = [];
-      array.forEach((item) => {
-        item.__selected = false;
-        item.__expanded = false;
-        if (item.parent_id === parentId) {
-          result.push(item);
-          item.children = prepareData(array, item.id);
-        }
-      })
-      return result;
-    }
 
-    const data = prepareData(rawData);
 
     return {
-      data
-    }
+      rawData
+    };
   }
 }
 </script>

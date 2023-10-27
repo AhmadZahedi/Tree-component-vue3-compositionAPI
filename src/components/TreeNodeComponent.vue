@@ -1,13 +1,23 @@
 <template>
   <li class="mt-2">
-    <div class="d-flex gap-2 align-items-center">
-      <svg @click="toggleChildrenList(node)" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none"
-           viewBox="0 0 24 24">
-        <path fill="#00e1ff" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" opacity=".1"/>
-        <path stroke="#00e1ff" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-        <path stroke="#00e1ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="m11 15 2.716-2.716v0a.402.402 0 0 0 0-.568v0L11 9"/>
-      </svg>
+    <div
+        class="d-flex gap-2 align-items-center"
+        :style="node.children.length ? '' : 'padding-left: 8px'"
+    >
+      <div
+          v-show="node.children.length"
+          class="icon-container"
+          :style="iconContainerStyles"
+          @click="toggleExpansion(node)"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none"
+             viewBox="0 0 24 24">
+          <path fill="#00e1ff" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" opacity=".1"/>
+          <path stroke="#00e1ff" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+          <path stroke="#00e1ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="m11 15 2.716-2.716v0a.402.402 0 0 0 0-.568v0L11 9"/>
+        </svg>
+      </div>
 
       <input
           type="checkbox"
@@ -26,7 +36,8 @@
 
     <ul
         v-if="node.children"
-        ref="childrenListElement"
+        ref="childrenElement"
+        class="children-list"
         :style="childrenListStyles"
     >
       <TreeNodeComponent
@@ -57,29 +68,41 @@ export default {
       required: true
     }
   },
+
   setup(props) {
-    const childrenListElement = ref(null);
+    const iconContainerStyles = computed(() => {
+      return {
+        transition: 'transform 0.5s ease',
+        transform: props.node.__expanded ? 'rotate(90deg)' : ''
+      };
+    });
+
+    const childrenElement = ref(null);
 
     const childrenListHeight = computed(() => {
-      return childrenListElement.value?.clientHeight;
+      return childrenElement.value && childrenElement.value.clientHeight;
     });
 
     const childrenListStyles = computed(() => {
-      return [
-        props.node.__expanded ? 'height: 0' : `height: ${childrenListHeight}px`,
-        'overflow: hidden'
-      ];
+      return {
+        transition: 'height 0.5s ease',
+        height: props.node.__expanded ? (childrenListHeight.value + 'px') : '0',
+        overflow: 'hidden'
+      };
     });
 
-    function toggleChildrenList(targetNode) {
-      targetNode.__expanded = !targetNode.__expanded;
+    function toggleExpansion() {
+      props.node.__expanded = !props.node.__expanded;
     }
 
     return {
+      iconContainerStyles,
+      childrenElement,
       childrenListStyles,
-      toggleChildrenList
+      toggleExpansion
     };
   }
+
 }
 </script>
 
@@ -92,5 +115,11 @@ li {
   width: 25px;
   height: 25px;
   margin-top: 0 !important;
+}
+
+.icon-container {
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
 }
 </style>

@@ -1,53 +1,64 @@
 <template>
-  <li class="mt-2">
+  <li class="d-flex">
     <div
-        class="d-flex gap-2 align-items-center"
-        :style="node.children.length ? '' : 'padding-left: 8px'"
+        v-if="node.children"
+        class="cursor-pointer icon-wrapper"
+        :style="iconContainerStyles"
+        @click="toggleExpansion(node)"
     >
-      <div
-          v-show="node.children.length"
-          class="icon-container"
-          :style="iconContainerStyles"
-          @click="toggleExpansion(node)"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none"
-             viewBox="0 0 24 24">
-          <path fill="#00e1ff" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" opacity=".1"/>
-          <path stroke="#00e1ff" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-          <path stroke="#00e1ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="m11 15 2.716-2.716v0a.402.402 0 0 0 0-.568v0L11 9"/>
-        </svg>
-      </div>
-
-      <input
-          type="checkbox"
-          :id="node[itemValue]"
-          :checked="node.__selected"
-          class="form-check-input me-1 custom-check"
-      >
-
-      <label
-          :for="node[itemValue]"
-          class="form-check-label"
-      >
-        {{ node[itemTitle] }}
-      </label>
+      <svg width="20" height="20" viewBox="0 0 16 16">
+        <path
+            fill="#0989FF"
+            d="M12 2a1 1 0 0 0-1.707-.707l-6 6a1 1 0 0 0 0 1.414l6 6a1 1 0 1 0 1.414-1.414L6.414 8l5.293-5.293A1 1 0 0 0 12 2zm0 0"
+        />
+      </svg>
     </div>
 
-    <ul
-        v-if="node.children"
-        ref="childrenElement"
-        class="children-list"
-        :style="childrenListStyles"
+    <input
+        :checked="node.__selected"
+        type="checkbox"
+        :id="node[itemValue]"
+        @change="addNodeIdToResult(node)"
     >
-      <TreeNodeComponent
-          v-for="child in node.children"
-          :node="child"
-          :item-title="itemTitle"
-          :item-value="itemValue"
-      />
-    </ul>
+    <label :for="node[itemValue]">
+      {{ node[itemTitle] }}
+    </label>
+
+    <div v-if="!dependent && node.parent_id === null">
+      <button
+          class="btn btn-success ms-5 fs-1"
+          @click="addAllNodesIdToResult"
+      >
+        Select all
+      </button>
+
+      <button
+          class="btn btn-danger ms-5 fs-1"
+          @click="emptyOutput"
+      >
+        Delete all
+      </button>
+    </div>
   </li>
+
+  <ul
+      v-if="hasChildren"
+      :class="childrenClasses"
+      :style="childrenStyles"
+      ref="childrenList"
+  >
+    <TreeNodeComponent
+        v-for="child in node.children"
+        :key="child[itemValue]"
+        :node="child"
+        :item-title="itemTitle"
+        :item-value="itemValue"
+        :dependent="dependent"
+        @addNodeIdToResult="addNodeIdToResult"
+        @addAllNodesIdToResult="addAllNodesIdToResult"
+        @emptyOutput="emptyOutput"
+    />
+  </ul>
 </template>
 
 <script>
@@ -59,67 +70,111 @@ export default {
       type: Object,
       required: true
     },
+    itemTitle: {
+      type: String,
+      required: true
+    },
     itemValue: {
       type: String,
       required: true
     },
-    itemTitle: {
-      type: String,
-      required: true
+    dependent: {
+      type: Boolean
     }
   },
 
-  setup(props) {
-    const iconContainerStyles = computed(() => {
-      return {
-        transition: 'transform 0.5s ease',
-        transform: props.node.__expanded ? 'rotate(90deg)' : ''
-      };
+  emits: ['addNodeIdToResult', 'addAllNodesIdToResult', 'emptyOutput'],
+
+  setup(props , { emit }) {
+    const childrenList = ref(null);
+
+    //Todo check is this true
+    const hasChildren = computed(() => {
+      const { children } = props.node;
+      return children && children.length > 0;
     });
 
-    const childrenElement = ref(null);
+    const childrenClasses = computed(() => {
+      return [
+          'children',
+          props.node.children ? 'ms-3' : ''
+      ];
+    });
 
     const childrenListHeight = computed(() => {
-      return childrenElement.value && childrenElement.value.clientHeight;
+      return childrenList.value?.clientHeight;
     });
 
-    const childrenListStyles = computed(() => {
+    const childrenStyles = computed(() => {
       return {
-        transition: 'height 0.5s ease',
-        height: props.node.__expanded ? (childrenListHeight.value + 'px') : '0',
-        overflow: 'hidden'
+        height: props.node.__expanded ? '0' : (childrenListHeight.value + 'px')
       };
     });
 
-    function toggleExpansion() {
-      props.node.__expanded = !props.node.__expanded;
+    const iconContainerStyles = computed(() => {
+      return {
+        transition: 'transform 200ms ease-in',
+        transform: props.node.__expanded ? 'transform: rotate(0deg)' : 'transform: rotate(-90deg)'
+      };
+    });
+
+    function toggleExpansion(treeNode) {
+      console.log(treeNode)
+      treeNode.__expanded = !treeNode.__expanded;
+    }
+
+    function addNodeIdToResult(item) {
+      emit('addNodeIdToResult', item);
+    }
+
+    function addAllNodesIdToResult() {
+      emit('addAllNodesIdToResult');
+    }
+
+    function emptyOutput () {
+      emit('emptyOutPut');
     }
 
     return {
+      addNodeIdToResult,
+      addAllNodesIdToResult,
+      emptyOutput,
+      hasChildren,
+      childrenClasses,
+      childrenStyles,
       iconContainerStyles,
-      childrenElement,
-      childrenListStyles,
       toggleExpansion
     };
   }
-
 }
 </script>
 
 <style scoped>
 li {
   list-style: none;
+  padding-top: 5px;
 }
 
-.custom-check {
+label {
+  user-select: none;
+}
+
+.hidden-children {
+  height: 0;
+}
+
+.children {
+  transition: all 200ms ease-in;
+  overflow: hidden;
+}
+
+.icon-wrapper {
   width: 25px;
-  height: 25px;
-  margin-top: 0 !important;
-}
-
-.icon-container {
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #0989FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
 }
 </style>
